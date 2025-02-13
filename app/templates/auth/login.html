@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100">
+    <div class="max-w-md w-full mx-4">
+        <!-- Card Container -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden transform hover:scale-105 transition-transform duration-300">
+            <!-- Header -->
+            <div class="px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600">
+                <h2 class="text-3xl font-bold text-white text-center">Welcome Back</h2>
+                <p class="text-blue-100 text-center mt-2">Enter your credentials to access your account</p>
+            </div>
+
+            <!-- Form Container -->
+            <div class="p-8">
+                <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-6">
+                    <!-- Username Input -->
+                    <div class="space-y-2">
+                        <label for="username" class="text-sm font-medium text-gray-700 block">Username</label>
+                        <div class="relative">
+                            <input type="text" id="username" name="username" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors duration-200 outline-none"
+                                placeholder="Enter your username">
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="space-y-2">
+                        <label for="password" class="text-sm font-medium text-gray-700 block">Password</label>
+                        <div class="relative">
+                            <input type="password" id="password" name="password" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors duration-200 outline-none"
+                                placeholder="Enter your password">
+                        </div>
+                    </div>
+
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                {% if category == 'success' %}
+                                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                                        <p>{{ message }}</p>
+                                    </div>
+                                {% else %}
+                                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                                        <p>{{ message }}</p>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Submit Button -->
+                    <button type="submit"
+                        class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all duration-200 transform hover:-translate-y-1">
+                        Sign In
+                    </button>
+                </form>
+
+                <!-- Register Link -->
+                <div class="mt-6 text-center">
+                    <p class="text-gray-600">
+                        Don't have an account?
+                        <a href="{{ url_for('auth.register') }}"
+                            class="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-200">
+                            Register here
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
