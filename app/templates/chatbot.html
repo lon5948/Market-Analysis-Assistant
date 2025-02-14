@@ -6,8 +6,11 @@
 <div class="min-h-screen bg-gray-100 py-6">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h1 class="text-2xl font-bold text-gray-900 mb-4">AI Financial Assistant</h1>
-            
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-2xl font-bold text-gray-900 mb-4">AI Financial Assistant</h1>
+                <a href="/" class="text-blue-600 hover:text-blue-800">Back to Dashboard</a>
+            </div>
+
             <!-- Chat container -->
             <div class="flex flex-col h-[600px]">
                 <!-- Chat messages area -->
@@ -33,13 +36,13 @@
                 <div class="border-t pt-4">
                     <form id="chat-form" class="flex space-x-4">
                         <div class="flex-1">
-                            <input type="text" 
-                                   id="user-input" 
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                            <input type="text"
+                                   id="user-input"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                    placeholder="Type your message here..."
                                    autocomplete="off">
                         </div>
-                        <button type="submit" 
+                        <button type="submit"
                                 class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                             Send
                         </button>
@@ -63,25 +66,25 @@ function escapeHtml(unsafe) {
 function formatMessage(content) {
     // First escape HTML to prevent XSS
     let formattedContent = escapeHtml(content);
-    
+
     // Replace bold markdown (**text**)
     formattedContent = formattedContent.replace(
         /\*\*(.*?)\*\*/g,
         '<strong class="font-bold">$1</strong>'
     );
-    
+
     // Replace italics (*text*)
     formattedContent = formattedContent.replace(
         /\*(.*?)\*/g,
         '<em class="italic">$1</em>'
     );
-    
+
     // Replace links
     formattedContent = formattedContent.replace(
         /\[([^\]]+)\]\(([^)]+)\)/g,
         '<a href="$2" class="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">$1</a>'
     );
-    
+
     return formattedContent;
 }
 
@@ -99,7 +102,7 @@ function appendMessage(content, isUser = false) {
 
     const messageDiv = document.createElement('div');
     messageDiv.className = `ml-3 ${isUser ? 'bg-green-50' : 'bg-blue-50'} p-3 rounded-lg`;
-    
+
     // Apply formatting only to AI messages, not user messages
     const formattedContent = isUser ? escapeHtml(content) : formatMessage(content);
     messageDiv.innerHTML = `<p class="text-sm text-gray-800">${formattedContent}</p>`;
@@ -107,7 +110,7 @@ function appendMessage(content, isUser = false) {
     messageWrapper.appendChild(avatarDiv);
     messageWrapper.appendChild(messageDiv);
     messagesDiv.appendChild(messageWrapper);
-    
+
     // Scroll to bottom
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
@@ -116,9 +119,9 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = document.getElementById('user-input');
     const message = input.value.trim();
-    
+
     if (!message) return;
-    
+
     // Append user message
     appendMessage(message, true);
     input.value = '';

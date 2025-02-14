@@ -12,7 +12,7 @@ def get_unique_companies_and_years(role):
         role = role.upper()
         if role == "ADMIN":
             role = "GLOBAL"
-        file_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        file_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
         print(f"Attempting to read file: {file_path}") # Debug log
 
         if not os.path.exists(file_path):
