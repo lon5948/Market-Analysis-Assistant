@@ -269,14 +269,33 @@ def generate_response_for_input_text(input_string: str, lookup_file: str, index_
 
     return response.text
 
+
+def generate_response_for_input_text_given_role(input_string: str, role:str):
+    assert role in ["korea", "china", "global"]
+
+    lookup_files = {
+        "korea": "../../combined_embedding_data/korea_combined_vector_db_data.csv",
+        "china": "../../combined_embedding_data/china_combined_vector_db_data.csv",
+        "global": "../../combined_embedding_data/global_combined_vector_db_data.csv"
+    }
+
+    index_endpoint_names = {
+        "korea": "2008671404504907776",
+        "china": "3798746703268413440",
+        "global": "2145925640023441408"
+    }
+
+    deployed_index_ids = {
+        "korea": "korea_deploy_1739541788954",
+        "china": "china_deploy_1739541595466",
+        "global": "global_deploy_1739541816879"
+    }
+
+    return generate_response_for_input_text(input_string, lookup_files[role], index_endpoint_names[role], deployed_index_ids[role])
+
 # Example usage
 input_string = "Total Revenue of Baidu 2024 Q1"
-lookup_file = "../../combined_embedding_data/china_combined_vector_db_data.csv"
-index_endpoint_name = "3798746703268413440"
-deployed_index_id = "china_deploy_1739541595466"
-# neighbors = perform_vector_search_and_get_content(input_string, lookup_file, index_endpoint_name, deployed_index_id)
-# print(neighbors)
-
-print("query:", input_string)
-response = generate_response_for_input_text(input_string, lookup_file, index_endpoint_name, deployed_index_id)
+role = "china"
+print("query:", input_string, "role:", role)
+response = generate_response_for_input_text_given_role(input_string, role)
 print("response:", response)
