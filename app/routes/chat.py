@@ -1,8 +1,8 @@
 # chat.py
 from flask import Blueprint, render_template, jsonify, request
 from flask_login import login_required, current_user
-from vertexai.preview.language_models import TextEmbeddingModel
-from vertexai.preview.generative_models import GenerativeModel
+from vertexai.generative_models import GenerativeModel
+from vertexai.language_models import TextEmbeddingModel
 from google.cloud import aiplatform
 from typing import List
 import csv
@@ -22,6 +22,14 @@ class FinancialChatbot:
         aiplatform.init(project=project, location=location)
         self.embedding_model = TextEmbeddingModel.from_pretrained(embedding_model)
         self.generative_model = GenerativeModel(generative_model)
+        self.prompt_tplt = self._read_prompt_template()
+
+    def _read_prompt_template(self):
+        """Read the prompt template from file."""
+        template_path = os.path.join('data', 'prompts', 'chatbot_prompt_template.txt')
+        with open(template_path, 'r') as file:
+            return file.read().strip()
+            
 
     def get_datapoint_content_from_csv(self, file_path: str, id: int) -> List[str]:
         """Read content from CSV file for a specific row."""
@@ -78,24 +86,15 @@ class FinancialChatbot:
         lookup_file: str,
         index_endpoint_name: str,
         deployed_index_id: str,
-        prompt_template: str = None
     ) -> str:
         """Generate response based on user input and context."""
-        if prompt_template is None:
-            prompt_template = """You are a financial analyst. You are being asked for the given input:
-
-            {input}
-
-            You are analyzing based on the following financial data:
-
-            {content}
-            """
 
         contexts = self.perform_vector_search_and_get_content(
             input_string, lookup_file, index_endpoint_name, deployed_index_id
         )
 
-        prompt = prompt_template.format(
+        prompt = self.prompt_tplt.format(
+            user_role=current_user.role.upper(),
             input=input_string,
             content="\n\n".join([context[5] for context in contexts if context])
         )
@@ -142,4 +141,5 @@ def chat_endpoint():
         return jsonify({'message': 'User role not set. Please contact your system administrator'})
 
     except Exception as e:
+        # print("error:", e)
         return jsonify({'error': str(e)}), 500
