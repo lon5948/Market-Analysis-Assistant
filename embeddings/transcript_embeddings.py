@@ -54,7 +54,7 @@ def process_transcript_data(input_csv, output_csv):
     return new_df
 
 if __name__ == "__main__":
-    df = process_transcript_data('./TRANSCRIPT_data/KOREA_TRANSCRIPT_Data.csv', './transcript_embedding_data/t_korea_vector_db_data.csv')
+    df = process_transcript_data('./TRANSCRIPT_data/GLOBAL_TRANSCRIPT_Data.csv', './transcript_embedding_data/global_vector_db_data.csv')
 
     # Print sample of the processed data
     print("\nSample of processed data:")
