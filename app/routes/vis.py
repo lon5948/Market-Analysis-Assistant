@@ -16,7 +16,9 @@ def visualization():
 def get_companies():
     try:
         role = current_user.role.upper()
-        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        if role == 'ADMIN':
+            role = 'GLOBAL'
+        data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         df = pd.read_csv(data_path)
         companies = df['Company Name'].unique().tolist()
@@ -39,7 +41,9 @@ def get_financial_data():
             return jsonify({'error': 'No data found for the selected companies and indices'}), 404
 
         role = current_user.role.upper()
-        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        if role == 'ADMIN':
+            role = 'GLOBAL'
+        data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         # Read your CSV file - adjust the path as needed
         df = pd.read_csv(data_path)
