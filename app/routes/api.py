@@ -9,21 +9,70 @@ api = Blueprint('api', __name__)
 class TranscriptStorageHandler:
     def __init__(self):
         """Initialize the storage client and bucket."""
-        bucket_name = os.environ.get('PROJECT') + "-bucket"
-        service_account_path = os.environ.get('SERVICE_ACCOUNT_PATH')
-        credentials = service_account.Credentials.from_service_account_file(
-            service_account_path,
-            scopes=['https://www.googleapis.com/auth/cloud-platform']
-        )
+        try:
+            bucket_name = os.environ.get('BUCKET_NAME')
+            service_account_path = os.environ.get('SERVICE_ACCOUNT_PATH')
+            print(f"Initializing with bucket: {bucket_name}")
+            
+            credentials = service_account.Credentials.from_service_account_file(
+                service_account_path,
+                scopes=['https://www.googleapis.com/auth/cloud-platform']
+            )
+            
+            self.storage_client = storage.Client(credentials=credentials)
+            self.bucket = self.storage_client.bucket(bucket_name)
+            
+            # Test bucket access
+            try:
+                self.bucket.reload()
+                print("Successfully connected to bucket")
+            except exceptions.Forbidden as e:
+                print(f"Permission denied accessing bucket: {str(e)}")
+                raise
+                
+            self.credentials = credentials
+        except Exception as e:
+            print(f"Error in initialization: {type(e).__name__}: {str(e)}")
+            raise
 
-        # Initialize storage client with the service account credentials
-        self.storage_client = storage.Client(credentials=credentials)
-
-        self.bucket = self.storage_client.bucket(bucket_name)
-
-        # Store credentials for signing URLs
-        self.credentials = credentials
-
+    def get_transcript_content(self, company, year, quarter):
+        """
+        Fetch the content of a transcript file from GCP Storage.
+        """
+        try:
+            # Format the quarter to ensure consistency
+            quarter = f"Q{quarter}" if not str(quarter).startswith('Q') else str(quarter)
+            prefix = f"metadata/transcripts/{company}/{year}/{quarter}/"
+            print(f"Searching for transcript in: {prefix}")
+            
+            try:
+                # List blobs with the prefix
+                blobs = list(self.bucket.list_blobs(prefix=prefix, max_results=1))
+                print(f"Successfully listed blobs in {prefix}")
+            except exceptions.Forbidden as e:
+                print(f"Permission denied listing blobs: {str(e)}")
+                return None, f"Permission denied accessing files: {str(e)}"
+            
+            if not blobs:
+                return None, f"No transcript found for {company} {year} {quarter}"
+            
+            blob = blobs[0]
+            print(f"Found transcript file: {blob.name}")
+            
+            try:
+                # Download and decode the content
+                content = blob.download_as_string().decode('utf-8')
+                print("Successfully downloaded content")
+                return content, None
+            except exceptions.Forbidden as e:
+                print(f"Permission denied downloading file: {str(e)}")
+                return None, f"Permission denied downloading file: {str(e)}"
+            
+        except Exception as e:
+            error_msg = f"Error type: {type(e).__name__}, Message: {str(e)}"
+            print(f"Error fetching transcript: {error_msg}")
+            return None, error_msg
+        
     def upload_transcript(self, file_path, company, year, quarter):
         """Upload a transcript file to GCP Storage."""
         blob_path = f"metadata/transcripts/{company}/{year}/{quarter}/{os.path.basename(file_path)}"
@@ -49,7 +98,8 @@ class TranscriptStorageHandler:
             return url
         except Exception as e:
             raise Exception(f"Error generating signed URL: {str(e)}")
-
+        
+    
 @api.route('/api/upload_transcripts', methods=['POST'])
 def upload_transcripts():
     data = request.json
@@ -169,3 +219,65 @@ def get_transcript_url():
                 "error": "Internal server error",
                 "details": str(e)
             }), 500
+
+@api.route('/api/fetch_transcript_content', methods=['POST'])
+def fetch_transcript_content():
+    """
+    Endpoint to fetch the content of a transcript file.
+    """
+    try:
+        # Get request data
+        data = request.json
+        if not data:
+            return jsonify({
+                "error": "No JSON data provided"
+            }), 400
+        
+        # Extract parameters
+        company = data.get('company')
+        year = data.get('year')
+        quarter = data.get('quarter')
+        
+        # Validate required fields
+        if not all([company, year, quarter]):
+            return jsonify({
+                "error": "Missing required fields",
+                "required": ["company", "year", "quarter"],
+                "received": data
+            }), 400
+        
+        print(f"Fetching transcript for {company} {year} {quarter}")
+        
+        # Initialize handler and fetch content
+        try:
+            handler = TranscriptStorageHandler()
+        except Exception as e:
+            return jsonify({
+                "error": "Failed to initialize storage handler",
+                "details": str(e)
+            }), 500
+        
+        content, error = handler.get_transcript_content(company, year, quarter)
+        
+        if error:
+            return jsonify({
+                "error": error,
+                "details": {
+                    "company": company,
+                    "year": year,
+                    "quarter": quarter
+                }
+            }), 403 if "Permission denied" in error else 404
+        
+        return jsonify({
+            "company": company,
+            "year": year,
+            "quarter": quarter,
+            "content": content
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "error": "Internal server error",
+            "details": str(e)
+        }), 500
