@@ -20,8 +20,8 @@
         <div class="bg-white p-6 rounded-lg shadow-lg">
             <div class="mb-6">
                 <select id="chartType" class="px-4 py-2 border rounded-md">
-                    <option value="line">Line Chart</option>
                     <option value="bar">Bar Chart</option>
+                    <option value="line">Line Chart</option>
                 </select>
                 <select id="indexSelect" class="px-4 py-2 border rounded-md">
                     <option value="Cost of Goods Sold">Cost of Goods Sold</option>
@@ -71,7 +71,7 @@
     <script>
         var currentChart = null;
         var currentRange = [2020, 2024]; // Default range
-        var type = "line";
+        var type = "bar";
         var index = "Cost of Goods Sold";
         var period = "yearly";
         var currency = "USD";
@@ -147,9 +147,18 @@
                     },
                     scales: {
                         x: { title: { display: true, text: 'Year' } },
-                        y: { 
+                        y1: { 
                             beginAtZero: true,
+                            position: 'left',
                             title: { display: true, text: unit[index].replace('USD', currency)}
+                        },
+                        y2: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: { display: true, text: 'Growth (%)' },
+                            grid: {
+                                drawOnChartArea: false // Prevent grid lines for the second Y-axis
+                            }
                         }
                     }
                 }

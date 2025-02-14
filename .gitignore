@@ -33,3 +33,6 @@ instance/
 dist/
 build/
 *.egg-info/
+
+# Generated files
+*.png
