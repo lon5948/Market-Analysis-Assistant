@@ -58,7 +58,7 @@ def process_financial_data(input_csv, output_csv):
     return new_df
 
 if __name__ == "__main__":
-    df = process_financial_data('KOREA_FIN_Data.csv', 'vector_db_data.csv')
+    df = process_financial_data('./data/KOREA_FIN_Data.csv', './embedding_data/vector_db_data.csv')
 
     # Print sample of the processed data
     print("\nSample of processed data:")
