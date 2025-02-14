@@ -42,12 +42,15 @@ cp .env.example .env
 
 ## Running the Application
 
-1. Initialize the database:
+1. Install playwright
+```bash
+playwright install
+```
+2. Initialize the database:
 ```bash
 python migrations.py
 ```
-
-2. Start the application:
+3. Start the application:
 ```bash
 python run.py
 ```
