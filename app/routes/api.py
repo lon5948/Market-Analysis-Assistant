@@ -1,10 +1,11 @@
 from flask import Blueprint, Flask, request, jsonify
 import pandas as pd
-import os
+import os, csv
 from google.cloud import storage, aiplatform
 from google.oauth2 import service_account
 from datetime import datetime, timedelta
 from typing import List
+from vertexai.language_models import TextEmbeddingModel
 
 api = Blueprint('api', __name__)
 class TranscriptStorageHandler:
@@ -144,6 +145,28 @@ def get_transcript_url():
         }), 500
 
 # TODO: Add api route
+def get_datapoint_content_from_csv(
+        file_path: str,
+        id: int
+) -> List[str]:
+    """Read the content of a CSV file and return the content of a specific row.
+
+    Args:
+        file_path (str): Required. The path to the CSV file.
+        id (int): Required. The row number to return.
+
+    Returns:
+        List[str] - The content of the row.
+    """
+    with open(file_path, "r") as file:
+        reader = csv.reader(file)
+        for row in reader:
+            try:
+                if int(row[0]) == id:
+                    return row[:-1]
+            except ValueError:
+                continue
+
 def vector_search_find_neighbors(
     index_endpoint_name: str,
     deployed_index_id: str,
@@ -227,4 +250,3 @@ index_endpoint_name = "3798746703268413440"
 deployed_index_id = "china_deploy_1739541595466"
 neighbors = perform_vector_search_and_get_content(input_string, lookup_file, index_endpoint_name, deployed_index_id)
 print(neighbors)
-
