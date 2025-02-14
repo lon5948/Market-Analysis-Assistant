@@ -1,13 +1,12 @@
 from flask import Blueprint, Flask, request, jsonify
 import pandas as pd
 import os
-from google.cloud import storage
+from google.cloud import storage, aiplatform
 from google.oauth2 import service_account
 from datetime import datetime, timedelta
+from typing import List
 
 api = Blueprint('api', __name__)
-
-
 class TranscriptStorageHandler:
     def __init__(self):
         """Initialize the storage client and bucket."""
@@ -17,12 +16,12 @@ class TranscriptStorageHandler:
             service_account_path,
             scopes=['https://www.googleapis.com/auth/cloud-platform']
         )
-        
+
         # Initialize storage client with the service account credentials
         self.storage_client = storage.Client(credentials=credentials)
-        
+
         self.bucket = self.storage_client.bucket(bucket_name)
-        
+
         # Store credentials for signing URLs
         self.credentials = credentials
 
@@ -50,7 +49,7 @@ class TranscriptStorageHandler:
             )
             return url
         except Exception as e:
-            raise
+            raise Exception(f"Error generating signed URL: {str(e)}")
 
 @api.route('/api/upload_transcripts', methods=['POST'])
 def upload_transcripts():
@@ -90,7 +89,7 @@ def upload_transcripts():
 def get_transcript_url():
     """
     request example:
-    
+
     payload = json.dumps({
         "company": "Apple",
         "year": "2020",
@@ -107,11 +106,11 @@ def get_transcript_url():
         data = request.json
         if not data:
             return jsonify({"error": "No JSON data provided"}), 400
-            
+
         company = data.get('company')
         year = data.get('year')
         quarter = data.get('quarter')
-        
+
         # Validate inputs
         if not all([company, year, quarter]):
             return jsonify({
@@ -119,12 +118,12 @@ def get_transcript_url():
                 "required": ["company", "year", "quarter"],
                 "received": data
             }), 400
-            
+
         print(f"Requesting transcript for: {company}, {year}, {quarter}")
-        
+
         handler = TranscriptStorageHandler()
         url = handler.get_transcript_url(company, year, quarter)
-        
+
         if url:
             return jsonify({"url": url})
         else:
@@ -136,10 +135,52 @@ def get_transcript_url():
                     "quarter": quarter
                 }
             }), 404
-            
+
     except Exception as e:
         print(f"Error in API endpoint: {str(e)}")
         return jsonify({
             "error": "Internal server error",
             "details": str(e)
         }), 500
+
+# TODO: Add api route
+def vector_search_find_neighbors(
+    index_endpoint_name: str,
+    deployed_index_id: str,
+    queries: List[List[float]],
+    project: str = "tsmccareerhack2025-bsid-grp5",
+    location: str = "us-central1",
+    num_neighbors: int = 10,
+) -> List[
+    List[aiplatform.matching_engine.matching_engine_index_endpoint.MatchNeighbor]
+]:
+    """Query the vector search index.
+
+    Args:
+        project (str): Required. Project ID
+        location (str): Required. The region name
+        index_endpoint_name (str): Required. Index endpoint to run the query
+        against.
+        deployed_index_id (str): Required. The ID of the DeployedIndex to run
+        the queries against.
+        queries (List[List[float]]): Required. A list of queries. Each query is
+        a list of floats, representing a single embedding.
+        num_neighbors (int): Required. The number of neighbors to return.
+
+    Returns:
+        List[List[aiplatform.matching_engine.matching_engine_index_endpoint.MatchNeighbor]] - A list of nearest neighbors for each query.
+    """
+    # Initialize the Vertex AI client
+    aiplatform.init(project=project, location=location)
+
+    # Create the index endpoint instance from an existing endpoint.
+    my_index_endpoint = aiplatform.MatchingEngineIndexEndpoint(
+        index_endpoint_name=index_endpoint_name
+    )
+
+    # Query the index endpoint for the nearest neighbors.
+    return my_index_endpoint.find_neighbors(
+        deployed_index_id=deployed_index_id,
+        queries=queries,
+        num_neighbors=num_neighbors,
+    )
