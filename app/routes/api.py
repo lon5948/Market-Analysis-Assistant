@@ -184,3 +184,47 @@ def vector_search_find_neighbors(
         queries=queries,
         num_neighbors=num_neighbors,
     )
+
+def perform_vector_search_and_get_content(input_string: str, lookup_file: str, index_endpoint_name: str, deployed_index_id: str) -> List[str]:
+    """Perform a vector search and return the content of the nearest neighbors.
+
+    Args:
+        input_string (str): Required. The input string to search for.
+        lookup_file (str): Required. The file to look up the content from.
+        index_endpoint_name (str): Required. Index endpoint to run the query
+        against.
+        deployed_index_id (str): Required. The ID of the DeployedIndex to run
+        the queries against.
+
+    Returns:
+        List[str] - The content of the nearest neighbors.
+    """
+    # Initialize the Vertex AI client
+    aiplatform.init(project="tsmccareerhack2025-bsid-grp5", location="us-central1")
+
+    # Convert the input string to embeddings
+    embedding_model = TextEmbeddingModel.from_pretrained("text-embedding-005")
+    embeddings = embedding_model.get_embeddings([input_string])
+
+    # Perform the vector search
+    neighbors = vector_search_find_neighbors(
+        index_endpoint_name=index_endpoint_name,
+        deployed_index_id=deployed_index_id,
+        queries=[embeddings[0].values],
+    )
+
+    # Get the content of the nearest neighbors
+    content = []
+    for neighbor in neighbors[0]:
+        content.append(get_datapoint_content_from_csv(lookup_file, int(neighbor.id)))
+
+    return content
+
+# Example usage
+input_string = "Baidu 2024 Q1"
+lookup_file = "../../combined_embedding_data/china_combined_vector_db_data.csv"
+index_endpoint_name = "3798746703268413440"
+deployed_index_id = "china_deploy_1739541595466"
+neighbors = perform_vector_search_and_get_content(input_string, lookup_file, index_endpoint_name, deployed_index_id)
+print(neighbors)
+
