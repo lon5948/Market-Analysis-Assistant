@@ -1,6 +1,6 @@
 # vis.py
 from flask import Blueprint, render_template, jsonify, request
-from flask_login import login_required
+from flask_login import login_required, current_user
 import pandas as pd
 import os, random
 
@@ -15,8 +15,10 @@ def visualization():
 @login_required  # Add this if you want to require login
 def get_companies():
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        data_path = os.path.join(os.path.dirname(current_dir), 'data', 'FIN_Data.csv')
+        role = current_user.role.upper()
+        if role == "ADMIN":
+            role = "GLOBAL"
+        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
 
         df = pd.read_csv(data_path)
         companies = df['Company Name'].unique().tolist()
@@ -35,8 +37,10 @@ def get_financial_data():
         company = request.args.get('company')
         index = request.args.get('index')
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        data_path = os.path.join(os.path.dirname(current_dir), 'data', 'FIN_Data.csv')
+        role = current_user.role.upper()
+        if role == "ADMIN":
+            role = "GLOBAL"
+        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
 
         # Read your CSV file - adjust the path as needed
         df = pd.read_csv(data_path)
@@ -44,7 +48,7 @@ def get_financial_data():
         if currency == 'TWD':
             for idx, row in df.iterrows():
                 df.at[idx, 'USD_Value'] = row['USD_Value'] * 32.93
-        
+
         df_pivot = df.pivot(index=["Company Name", "CALENDAR_YEAR", "CALENDAR_QTR"], columns="Index", values="USD_Value").reset_index()
 
         local_currency = df.groupby(["Company Name", "CALENDAR_YEAR", "CALENDAR_QTR"])["Local_Currency"].first().reset_index()
@@ -58,14 +62,14 @@ def get_financial_data():
         df_pivot["Operating Margin"] = df_pivot["Operating Income"] / df_pivot["Revenue"] * 100
         # print(df_pivot.head())
 
-        
+
 
 
         if startYear and endYear:
             df_pivot = df_pivot[(df_pivot['CALENDAR_YEAR'] >= int(startYear)) & (df_pivot['CALENDAR_YEAR'] <= int(endYear))]
-        
+
         dataset = []
-        
+
         # 15 colors
         colors = ['#4bc0c0', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
                   '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
@@ -77,7 +81,7 @@ def get_financial_data():
                 continue
             i += 1
             df_yearly = df_pivot[df_pivot['Company Name'] == c]
-            
+
             if period == 'quarterly':
                 df_yearly = df_yearly.groupby(['CALENDAR_YEAR', 'CALENDAR_QTR']).agg({
                     'Cost of Goods Sold': 'sum',
@@ -123,7 +127,7 @@ def get_financial_data():
                     'backgroundColor': colors[i % len(colors)],
                     'tension': 0.1
                 })
-        
+
         if len(dataset) == 0:
             return jsonify({'error': 'No data found for the selected company'}), 404
 
