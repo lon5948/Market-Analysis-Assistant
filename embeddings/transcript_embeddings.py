@@ -8,6 +8,7 @@ import json
 def create_content(row):
     """Create formatted content string from row data"""
     return f"""
+    transcript file of
     Company: {row['Company Name']}
     Year: {row['CALENDAR_YEAR']}
     Quarter: {row['CALENDAR_QTR']}

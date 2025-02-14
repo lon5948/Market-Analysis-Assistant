@@ -11,9 +11,9 @@ def create_content(row):
     Year: {row['CALENDAR_YEAR']}
     Quarter: {row['CALENDAR_QTR']}
     Financial Index: {row['Index']}
-    Value (USD): ${row['USD_Value']:,.2f}
+    Value (USD): ${row['USD_Value']:,.2f} Million
     Local Currency: {row['Local_Currency']}
-    Local Value: {row['Local_Value']:,.2f}
+    Local Value: {row['Local_Value']:,.2f} Million
     """
 
 def get_embedding(text):
