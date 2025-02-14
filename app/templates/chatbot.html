@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}AI Assistant{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-2xl font-bold text-gray-900 mb-4">AI Financial Assistant</h1>
+                <a href="/" class="text-blue-600 hover:text-blue-800">Back to Dashboard</a>
+            </div>
+
+            <!-- Chat container -->
+            <div class="flex flex-col h-[600px]">
+                <!-- Chat messages area -->
+                <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 p-4 border border-gray-200 rounded-lg">
+                    <div class="flex flex-col space-y-4">
+                        <!-- Welcome message -->
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                                    <span class="text-white text-sm">AI</span>
+                                </div>
+                            </div>
+                            <div class="ml-3 bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-800">
+                                    Hello! I'm your AI financial assistant. I can help you analyze market data and provide insights based on your access level. What would you like to know?
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input area -->
+                <div class="border-t pt-4">
+                    <form id="chat-form" class="flex space-x-4">
+                        <div class="flex-1">
+                            <input type="text"
+                                   id="user-input"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="Type your message here..."
+                                   autocomplete="off">
+                        </div>
+                        <button type="submit"
+                                class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function appendMessage(content, isUser = false) {
+    const messagesDiv = document.getElementById('chat-messages');
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = 'flex items-start mt-4';
+
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'flex-shrink-0';
+    const avatar = document.createElement('div');
+    avatar.className = `h-8 w-8 rounded-full ${isUser ? 'bg-green-500' : 'bg-blue-500'} flex items-center justify-center`;
+    avatar.innerHTML = `<span class="text-white text-sm">${isUser ? 'You' : 'AI'}</span>`;
+    avatarDiv.appendChild(avatar);
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `ml-3 ${isUser ? 'bg-green-50' : 'bg-blue-50'} p-3 rounded-lg`;
+    messageDiv.innerHTML = `<p class="text-sm text-gray-800">${content}</p>`;
+
+    messageWrapper.appendChild(avatarDiv);
+    messageWrapper.appendChild(messageDiv);
+    messagesDiv.appendChild(messageWrapper);
+
+    // Scroll to bottom
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('user-input');
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    // Append user message
+    appendMessage(message, true);
+    input.value = '';
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message })
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        appendMessage(data.response);
+    } catch (error) {
+        appendMessage('Sorry, there was an error processing your request. Please try again.');
+        console.error('Error:', error);
+    }
+});
+</script>
+{% endblock %}
