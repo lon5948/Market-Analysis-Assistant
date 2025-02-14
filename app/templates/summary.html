@@ -3,22 +3,31 @@
 {% block title %}Financial Report{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 py-6">
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center justify-between mb-8">
-                <h1 class="text-2xl font-bold text-gray-900 mb-6">Financial Report</h1>
-                <a href="/" class="text-blue-600 hover:text-blue-800">Back to Dashboard</a>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Header with gradient -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-white">Financial Report Generator</h1>
+                    <a href="/" class="text-white hover:text-blue-200 font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </div>
             </div>
 
-            <div class="flex flex-col md:flex-row gap-6">
-                <!-- Left Side - Form -->
-                <div class="w-full md:w-1/3">
-                    <form id="reportForm" class="space-y-4">
+            <div class="flex">
+                <!-- Left Side - Form Section -->
+                <div class="w-1/3 border-r border-gray-200 p-6">
+                    <form id="reportForm" class="space-y-6">
+                        <!-- Form fields remain the same -->
                         <div>
-                            <label for="company" class="block text-sm font-medium text-gray-700 mb-2">Company</label>
+                            <label for="company" class="block text-base font-medium text-gray-700 mb-2">Company</label>
                             <select id="company" name="company" required
-                                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base">
                                 <option value="">Select a company</option>
                                 {% for company in companies %}
                                 <option value="{{ company }}">{{ company }}</option>
@@ -27,9 +36,9 @@
                         </div>
 
                         <div>
-                            <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                            <label for="year" class="block text-base font-medium text-gray-700 mb-2">Year</label>
                             <select id="year" name="year" required
-                                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base">
                                 <option value="">Select a year</option>
                                 {% for year in years %}
                                 <option value="{{ year }}">{{ year }}</option>
@@ -38,9 +47,9 @@
                         </div>
 
                         <div>
-                            <label for="quarter" class="block text-sm font-medium text-gray-700 mb-2">Quarter</label>
+                            <label for="quarter" class="block text-base font-medium text-gray-700 mb-2">Quarter</label>
                             <select id="quarter" name="quarter" required
-                                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base">
                                 <option value="">Select a quarter</option>
                                 {% for quarter in quarters %}
                                 <option value="{{ quarter }}">{{ quarter }}</option>
@@ -48,17 +57,363 @@
                             </select>
                         </div>
 
-                        <div class="pt-4">
-                            <button type="submit" id="submitButton"
-                                class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <button type="submit" id="generateButton"
+                            class="w-full flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition-colors">
+                            <span class="normal-state flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
                                 Generate Report
-                            </button>
-                        </div>
+                            </span>
+                            <span class="loading-state hidden">
+                                <svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Generating...
+                            </span>
+                        </button>
                     </form>
                 </div>
 
+                <!-- Right Side - Report Preview -->
+                <div class="w-2/3 bg-gray-50">
+                    <div id="reportPreview" class="hidden h-full">
+                        <div class="border-b border-gray-200 bg-white px-6 py-4">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-xl font-semibold text-gray-900">Report Preview</h2>
+                                <button id="downloadButton"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-sm transition-colors">
+                                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    Download PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6 overflow-auto max-h-[calc(100vh-12rem)]">
+                            <div id="reportContent" class="markdown-content bg-white rounded-lg shadow-sm p-6">
+                                <!-- Report content will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Add Markdown-it for Markdown parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+/* Markdown content styles */
+.markdown-content {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    color: #374151;
+}
+
+.markdown-content h1 {
+    font-size: 2.25rem;
+    font-weight: bold;
+    color: #1a365d;
+    margin: 2rem 0 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.markdown-content h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 1.5rem 0 1rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.markdown-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 1.25rem 0 0.75rem;
+}
+
+.markdown-content p {
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #4b5563;
+    background-color: #f3f4f6;
+    padding: 1rem;
+    border-radius: 0.25rem;
+}
+
+.markdown-content ul {
+    list-style-type: disc;
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.markdown-content ol {
+    list-style-type: decimal;
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content code {
+    background-color: #f3f4f6;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+}
+
+.markdown-content pre {
+    background-color: #f3f4f6;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    border: 1px solid #e5e7eb;
+}
+
+.markdown-content th {
+    background-color: #f3f4f6;
+    font-weight: 600;
+    padding: 0.75rem;
+    text-align: left;
+    border: 1px solid #e5e7eb;
+}
+
+.markdown-content td {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+}
+
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 1.5rem auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.markdown-content a:hover {
+    text-decoration: underline;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const md = window.markdownit({
+        html: true,
+        linkify: true,
+        typographer: true
+    });
+
+    const form = document.getElementById('reportForm');
+    const generateButton = document.getElementById('generateButton');
+    const reportPreview = document.getElementById('reportPreview');
+    const reportContent = document.getElementById('reportContent');
+    const downloadButton = document.getElementById('downloadButton');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Show loading state
+        generateButton.disabled = true;
+        generateButton.querySelector('.normal-state').classList.add('hidden');
+        generateButton.querySelector('.loading-state').classList.remove('hidden');
+
+        const formData = {
+            company: document.getElementById('company').value,
+            year: document.getElementById('year').value,
+            quarter: document.getElementById('quarter').value
+        };
+
+        try {
+            // Get transcript data and content from your API endpoints
+            const transcriptResponse = await fetch('/api/get_transcript_url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const transcriptData = await transcriptResponse.json();
+            if (transcriptData.error) throw new Error(transcriptData.error);
+
+            const transcriptContentResponse = await fetch('/api/fetch_transcript_content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const transcriptContent = await transcriptContentResponse.json();
+            if (transcriptContent.error) throw new Error(transcriptContent.error);
+
+            // Prepare the Markdown prompt
+            const prompt = `
+                    Generate a professional financial report for ${formData.company} for ${formData.year} ${formData.quarter}.
+
+                    Use the following transcript content for detailed analysis:
+
+                    ${transcriptContent}
+
+                    Please structure the report as follows:
+
+                    1. Executive Summary
+                    - Company performance overview based on the transcript
+                    - Key highlights and challenges mentioned in the call
+                    - Major developments and announcements
+
+                    2. Financial Analysis
+                    - Detailed metrics analysis with QoQ comparisons
+                    - Revenue and profitability trends discussed in the call
+                    - Cost structure and margins insights
+                    - Management's commentary on financial performance
+
+                    3. Market Position
+                    - Competitive landscape insights from the call
+                    - Market share analysis and market conditions
+                    - Strategic initiatives and developments mentioned
+                    - Product/service updates and roadmap
+
+                    4. Future Outlook
+                    - Management guidance and forward-looking statements
+                    - Growth opportunities discussed
+                    - Risk factors and challenges mentioned
+                    - Market trends and industry outlook
+
+                    5. Q&A Highlights
+                    - Key questions from analysts
+                    - Management's responses to critical questions
+                    - Additional context provided during Q&A
+
+                    6. References
+                    Transcript Link: ${transcriptData.url}
+
+                    Format the response in clean, professional HTML with proper heading hierarchy and structure. Remember, just provide a hyperlink to the transcript instead of whole Transcript Link.`;
+
+
+            // Get report content
+            const chatResponse = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: prompt })
+            });
+
+            const chatData = await chatResponse.json();
+            if (chatData.error) throw new Error(chatData.error);
+
+            const cleanResponse = chatData.response
+                .replace(/```html/g, '')  // Remove html code markers
+                .replace(/```/g, '')      // Remove any other code markers
+                .trim();                  // Remove extra whitespace
+
+            // Insert content with metrics visualization
+            reportContent.innerHTML = `
+                ${cleanResponse}
+            `;
+            reportPreview.classList.remove('hidden');
+
+            // PDF generation
+            downloadButton.onclick = async () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'pt', 'a4');
+                const content = document.getElementById('reportContent');
+
+                // Set PDF margins
+                const margins = {
+                    top: 40,
+                    bottom: 40,
+                    left: 40,
+                    right: 40
+                };
+
+                // Calculate usable page width
+                const pageWidth = doc.internal.pageSize.getWidth() - margins.left - margins.right;
+
+                // Generate PDF with proper scaling
+                const canvas = await html2canvas(content, {
+                    scale: 2, // Increase quality
+                    useCORS: true,
+                    logging: false,
+                    letterRendering: true
+                });
+
+                const contentWidth = canvas.width;
+                const contentHeight = canvas.height;
+                const pageHeight = doc.internal.pageSize.getHeight() - margins.top - margins.bottom;
+
+                // Calculate scale to fit width
+                const scale = pageWidth / contentWidth;
+                const scaledHeight = contentHeight * scale;
+
+                // Add pages as needed
+                let heightLeft = scaledHeight;
+                let position = margins.top;
+                let page = 1;
+
+                doc.addImage(canvas, 'PNG', margins.left, position, pageWidth, scaledHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = margins.top - pageHeight * page;
+                    doc.addPage();
+                    doc.addImage(canvas, 'PNG', margins.left, position, pageWidth, scaledHeight);
+                    heightLeft -= pageHeight;
+                    page++;
+                }
+
+                doc.save(`${formData.company}_${formData.year}_${formData.quarter}_report.pdf`);
+            };
+
+        } catch (error) {
+            console.error('Error:', error);
+            reportContent.innerHTML = `
+                <div class="rounded-md bg-red-50 p-4 border-l-4 border-red-400">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Error Generating Report</h3>
+                            <div class="mt-2 text-sm text-red-700">${error.message}</div>
+                        </div>
+                    </div>
+                </div>`;
+            reportPreview.classList.remove('hidden');
+        } finally {
+            // Reset button state
+            generateButton.disabled = false;
+            generateButton.querySelector('.normal-state').classList.remove('hidden');
+            generateButton.querySelector('.loading-state').classList.add('hidden');
+        }
+    });
+});
+</script>
 {% endblock %}
