@@ -5,8 +5,8 @@ import csv
 import pandas as pd
 
 def get_datapoints(country):
-    embedding_file = f'../embedding_data/{country}_vector_db_data.csv'
-    transcript_file = f'../transcript_embedding_data/{country}_vector_db_data.csv'
+    embedding_file = f'./embedding_data/{country}_vector_db_data.csv'
+    transcript_file = f'./transcript_embedding_data/{country}_vector_db_data.csv'
 
     embedding_df = pd.read_csv(embedding_file)
     transcript_df = pd.read_csv(transcript_file)
@@ -25,7 +25,7 @@ def upload_datapoints(index: MatchingEngineIndex, index_datapoints: list[IndexDa
 
 index_idx = {
     "korea": "62412678039076864",
-    # "china": "2648604764056584192",
+    "china": "2648604764056584192",
     "global": "2745432156045049856"
 }
 
