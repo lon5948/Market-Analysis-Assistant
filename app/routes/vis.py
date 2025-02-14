@@ -16,7 +16,9 @@ def visualization():
 def get_companies():
     try:
         role = current_user.role.upper()
-        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        if role == 'ADMIN':
+            role = 'GLOBAL'
+        data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         df = pd.read_csv(data_path)
         companies = df['Company Name'].unique().tolist()
@@ -35,8 +37,13 @@ def get_financial_data():
         company = request.args.get('company')
         index = request.args.get('index')
 
+        if not period or not currency or not company or not index:
+            return jsonify({'error': 'No data found for the selected companies and indices'}), 404
+
         role = current_user.role.upper()
-        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        if role == 'ADMIN':
+            role = 'GLOBAL'
+        data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         # Read your CSV file - adjust the path as needed
         df = pd.read_csv(data_path)
@@ -67,12 +74,29 @@ def get_financial_data():
         dataset = []
 
         # 15 colors
-        colors = ['#4bc0c0', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
-                  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
-                  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A']
+        colors = [
+            '#388E8E',  # Dark Cyan
+            '#FF7F50',  # Coral
+            '#9932CC',  # Dark Orchid
+            '#FFD700',  # Gold
+            '#4682B4',  # Steel Blue
+            '#CD853F',  # Peru
+            '#8B4513',  # Saddle Brown
+            '#556B2F',  # Dark Olive Green
+            '#8FBC8F',  # Dark Sea Green
+            '#B22222',  # Firebrick
+            '#6B8E23',  # Olive Drab
+            '#8B0000',  # Dark Red
+            '#483D8B',  # Dark Slate Blue
+            '#2F4F4F',  # Dark Slate Gray
+            '#8B008B'   # Dark Magenta
+        ]
 
         i = -1
-        for c in company.split(','):
+
+        pairs = [[c, idx] for c in company.split(',') for idx in index.split(',')]
+
+        for c, index in pairs:
             if c not in df_pivot['Company Name'].unique():
                 continue
             i += 1
@@ -106,26 +130,65 @@ def get_financial_data():
             # print(df_yearly.head())
 
             if period == 'quarterly':
+                data = df_yearly.groupby(['CALENDAR_YEAR', 'CALENDAR_QTR'])[index].sum().tolist()
+                diff = [0]
+                for idx in range(1, len(data)):
+                    diff.append((data[idx] - data[idx - 1]) / data[idx - 1] * 100)
                 dataset.append({
-                    'label': c,
+                    'type': 'line',
+                    'label': f'{c} {index} (QoQ % Change)',
+                    'data': diff,
+                    'fill': False,
+                    'borderColor': colors[i % len(colors)],
+                    'backgroundColor': colors[i % len(colors)],
+                    'tension': 0.1,
+                    'yAxisID': 'y2',
+                })
+                i += 1
+                dataset.append({
+                    'type': None if 'Margin' not in index else 'line',
+                    'label': f'{c} {index}',
                     'data': df_yearly.groupby(['CALENDAR_YEAR', 'CALENDAR_QTR'])[index].sum().tolist(),
                     'fill': False,
                     'borderColor': colors[i % len(colors)],
                     'backgroundColor': colors[i % len(colors)],
-                    'tension': 0.1
+                    'tension': 0.1,
+                    'yAxisID': 'y1' if 'Margin' not in index else 'y2',
                 })
             else:
+                data = df_yearly.groupby('CALENDAR_YEAR')[index].sum().tolist()
+                diff = [0]
+                for idx in range(1, len(data)):
+                    if data[idx - 1] == 0:
+                        diff.append(0)
+                    else:
+                        diff.append((data[idx] - data[idx - 1]) / data[idx - 1] * 100)
                 dataset.append({
-                    'label': c,
+                    'type': 'line',
+                    'label': f'{c} {index} (YoY % Change)',
+                    'data': diff,
+                    'fill': False,
+                    'borderColor': colors[i % len(colors)],
+                    'backgroundColor': colors[i % len(colors)],
+                    'tension': 0.1,
+                    'yAxisID': 'y2',
+                })
+                i += 1
+                dataset.append({
+                    'type': None if 'Margin' not in index else 'line',
+                    'label': f'{c} {index}',
                     'data': df_yearly.groupby('CALENDAR_YEAR')[index].sum().tolist(),
                     'fill': False,
                     'borderColor': colors[i % len(colors)],
                     'backgroundColor': colors[i % len(colors)],
-                    'tension': 0.1
+                    'tension': 0.1,
+                    'yAxisID': 'y1' if 'Margin' not in index else 'y2',
                 })
+        
+        dataset.sort(key=lambda x: 0 if 'type' in x.keys() and x['type'] == 'line' else 1)
 
         if len(dataset) == 0:
-            return jsonify({'error': 'No data found for the selected company'}), 404
+            return jsonify({'error': 'No data found for the selected companies and indices'}), 404
 
         if period == 'quarterly':
             data = {
