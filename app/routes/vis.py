@@ -16,7 +16,9 @@ def visualization():
 def get_companies():
     try:
         role = current_user.role.upper()
-        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        if role == 'ADMIN':
+            role = 'GLOBAL'
+        data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         df = pd.read_csv(data_path)
         companies = df['Company Name'].unique().tolist()
@@ -36,7 +38,9 @@ def get_financial_data():
         index = request.args.get('index')
 
         role = current_user.role.upper()
-        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        if role == 'ADMIN':
+            role = 'GLOBAL'
+        data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         # Read your CSV file - adjust the path as needed
         df = pd.read_csv(data_path)
@@ -172,7 +176,7 @@ def get_financial_data():
                     'tension': 0.1,
                     'yAxisID': 'y1',
                 })
-        
+
         dataset.sort(key=lambda x: 0 if 'type' in x.keys() else 1)
 
         if len(dataset) == 0:
