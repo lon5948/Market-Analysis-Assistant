@@ -18,7 +18,7 @@ def create_content(row):
 
 def get_embedding(text):
     """Get embedding from Vertex AI TextEmbedding Model"""
-    model = TextEmbeddingModel.from_pretrained("text-embedding-005")
+    model = TextEmbeddingModel.from_pretrained("text-multilingual-embedding-002")
     embeddings = model.get_embeddings([text])
     return embeddings[0].values if embeddings else None
 
@@ -58,7 +58,6 @@ def process_financial_data(input_csv, output_csv):
     return new_df
 
 if __name__ == "__main__":
-    df = process_financial_data('./FIN_data/CHINA_FIN_Data.csv', './embedding_data/china_vector_db_data.csv')
-    # Print sample of the processed data
-    print("\nSample of processed data:")
-    print(df.head(1).to_string())
+    countries = ['global', 'korea', 'china']
+    for country in countries:
+        df = process_financial_data(f'./FIN_data/{country.upper()}_FIN_Data.csv', f'./embedding_data/{country}_vector_db_data.csv')

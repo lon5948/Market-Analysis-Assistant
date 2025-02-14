@@ -227,7 +227,7 @@ def perform_vector_search_and_get_content(input_string: str, lookup_file: str, i
     aiplatform.init(project="tsmccareerhack2025-bsid-grp5", location="us-central1")
 
     # Convert the input string to embeddings
-    embedding_model = TextEmbeddingModel.from_pretrained("text-embedding-005")
+    embedding_model = TextEmbeddingModel.from_pretrained("text-multilingual-embedding-002")
     embeddings = embedding_model.get_embeddings([input_string])
 
     # Perform the vector search

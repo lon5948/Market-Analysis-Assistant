@@ -4,6 +4,7 @@ from google.cloud import aiplatform
 from vertexai.language_models import TextEmbeddingModel
 import json
 
+
 def create_content(row):
     """Create formatted content string from row data"""
     return f"""
@@ -14,7 +15,7 @@ def create_content(row):
 
 def get_embedding(text):
     """Get embedding from Vertex AI TextEmbedding Model"""
-    model = TextEmbeddingModel.from_pretrained("text-embedding-005")
+    model = TextEmbeddingModel.from_pretrained("text-multilingual-embedding-002")
     embeddings = model.get_embeddings([text])
     return embeddings[0].values if embeddings else None
 
@@ -54,8 +55,6 @@ def process_transcript_data(input_csv, output_csv):
     return new_df
 
 if __name__ == "__main__":
-    df = process_transcript_data('./TRANSCRIPT_data/GLOBAL_TRANSCRIPT_Data.csv', './transcript_embedding_data/global_vector_db_data.csv')
-
-    # Print sample of the processed data
-    print("\nSample of processed data:")
-    print(df.head(1).to_string())
+    countries = ['global', 'korea', 'china']
+    for country in countries:
+        df = process_transcript_data(f'./TRANSCRIPT_data/{country.upper()}_TRANSCRIPT_Data.csv', f'./transcript_embedding_data/{country}_vector_db_data.csv')
