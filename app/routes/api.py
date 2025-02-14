@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect
 import pandas as pd
 import os
 from google.cloud import storage
@@ -102,42 +102,70 @@ def get_transcript_url():
 
     """
     try:
-        data = request.json
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-
-        company = data.get('company')
-        year = data.get('year')
-        quarter = data.get('quarter')
-
-        # Validate inputs
-        if not all([company, year, quarter]):
-            return jsonify({
-                "error": "Missing required fields",
-                "required": ["company", "year", "quarter"],
-                "received": data
-            }), 400
-
-        print(f"Requesting transcript for: {company}, {year}, {quarter}")
-
-        handler = TranscriptStorageHandler()
-        url = handler.get_transcript_url(company, year, quarter)
-
-        if url:
-            return jsonify({"url": url})
+        if request.method == 'GET':
+            company = request.args.get('company')
+            year = request.args.get('year')
+            quarter = request.args.get('quarter')
+            
+            # Validate inputs
+            if not all([company, year, quarter]):
+                return jsonify({
+                    "error": "Missing required parameters",
+                    "required": ["company", "year", "quarter"],
+                    "received": {
+                        "company": company,
+                        "year": year,
+                        "quarter": quarter
+                    }
+                }), 400
+            
+            handler = TranscriptStorageHandler()
+            url = handler.get_transcript_url(company, year, quarter)
+            
+            if url:
+                return redirect(url)  # Redirect to the actual transcript
+            else:
+                return "Transcript not found", 404  # Simple text response for browser
+                
+        # Handle POST request (from curl/postman)
         else:
-            return jsonify({
-                "error": "Transcript not found",
-                "details": {
-                    "company": company,
-                    "year": year,
-                    "quarter": quarter
-                }
-            }), 404
-
+            data = request.json
+            if not data:
+                return jsonify({"error": "No JSON data provided"}), 400
+                
+            company = data.get('company')
+            year = data.get('year')
+            quarter = data.get('quarter')
+            
+            # Validate inputs
+            if not all([company, year, quarter]):
+                return jsonify({
+                    "error": "Missing required fields",
+                    "required": ["company", "year", "quarter"],
+                    "received": data
+                }), 400
+            
+            handler = TranscriptStorageHandler()
+            url = handler.get_transcript_url(company, year, quarter)
+            
+            if url:
+                return jsonify({"url": url})
+            else:
+                return jsonify({
+                    "error": "Transcript not found",
+                    "details": {
+                        "company": company,
+                        "year": year,
+                        "quarter": quarter
+                    }
+                }), 404
+            
     except Exception as e:
         print(f"Error in API endpoint: {str(e)}")
-        return jsonify({
-            "error": "Internal server error",
-            "details": str(e)
-        }), 500
+        if request.method == 'GET':
+            return f"Error: {str(e)}", 500  # Simple text response for browser
+        else:
+            return jsonify({
+                "error": "Internal server error",
+                "details": str(e)
+            }), 500
