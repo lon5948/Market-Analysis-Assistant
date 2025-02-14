@@ -23,7 +23,19 @@
                     <option value="bar">Bar Chart</option>
                     <option value="line">Line Chart</option>
                 </select>
+                <select id="periodSelect" class="px-4 py-2 border rounded-md">
+                    <option value="yearly">Yearly</option>
+                    <option value="quarterly">Quarterly</option>
+                </select>
+                <!-- currency select -->
+                <select id="currencySelect" class="px-4 py-2 border rounded-md">
+                    <option value="USD">USD</option>
+                    <option value="TWD">TWD</option>
+                </select>
                 <select id="indexSelect" class="px-4 py-2 border rounded-md">
+                    <option value="select">Select Indices...</option>
+                    <option value="all">Select all</option>
+                    <option value="none">Unselect all</option>
                     <option value="Cost of Goods Sold">Cost of Goods Sold</option>
                     <option value="Operating Expense">Operating Expense</option>
                     <option value="Operating Income">Operating Income</option>
@@ -34,20 +46,15 @@
                     <option value="Gross Profit Margin">Gross Profit Margin</option>
                     <option value="Operating Margin">Operating Margin</option>
                 </select>
-                <select id="periodSelect" class="px-4 py-2 border rounded-md">
-                    <option value="yearly">Yearly</option>
-                    <option value="quarterly">Quarterly</option>
-                </select>
-                <!-- currency select -->
-                <select id="currencySelect" class="px-4 py-2 border rounded-md">
-                    <option value="USD">USD</option>
-                    <option value="TWD">TWD</option>
-                </select>
                 <select id="companySelect" class="px-4 py-2 border rounded-md">
                     <option value="select">Companies...</option>
                     <option value="all">Select all</option>
                     <option value="none">Unselect all</option>
                 </select>
+            </div>
+            <div class="mt-2 flex flex-wrap items-center" style="margin-bottom: 12px;">
+                <span class="mr-2 text-gray-700" style="margin-top: 12px; margin-bottom: 15px;">Selected Indices:</span>
+                <div id="selectedIndices" class="flex flex-wrap items-center"></div>
             </div>
             <div class="mt-2 flex flex-wrap items-center" style="margin-bottom: 12px;">
                 <span class="mr-2 text-gray-700" style="margin-top: 12px; margin-bottom: 15px;">Selected companies:</span>
@@ -72,22 +79,22 @@
         var currentChart = null;
         var currentRange = [2020, 2024]; // Default range
         var type = "bar";
-        var index = "Cost of Goods Sold";
         var period = "yearly";
         var currency = "USD";
+        var indices = [
+            "Cost of Goods Sold",
+            "Operating Expense",
+            "Operating Income",
+            "Revenue",
+            "Tax Expense",
+            "Total Asset",
+            "Gross Profit",
+            "Gross Profit Margin",
+            "Operating Margin"
+        ];
+        var selectedIndices = [];
         var companies = [];
         var selectedCompanies = [];
-        const unit = {
-            "Cost of Goods Sold": "Million USD",
-            "Operating Expense": "Million USD",
-            "Operating Income": "Million USD",
-            "Revenue": "Million USD",
-            "Tax Expense": "Million USD",
-            "Total Asset": "Million USD",
-            "Gross Profit": "Million USD",
-            "Gross Profit Margin": "percentage (%)",
-            "Operating Margin": "percentage (%)",
-        }
 
         async function fetchCompanies() {
             const response = await fetch('/api/companies');
@@ -108,7 +115,7 @@
                 url.searchParams.append('currency', currency);
                 url.searchParams.append('period', period);
                 url.searchParams.append('company', selectedCompanies.join(','));
-                url.searchParams.append('index', index);
+                url.searchParams.append('index', selectedIndices.join(','));
                 url.searchParams.append('startYear', startYear);
                 url.searchParams.append('endYear', endYear);
                 const response = await fetch(url.toString());
@@ -141,7 +148,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        title: { display: true, text: index },
+                        title: { display: true, text: selectedIndices.join(', ') },
                         legend: { position: 'top' },
                         tooltip: { mode: 'index', intersect: false }
                     },
@@ -150,12 +157,12 @@
                         y1: { 
                             beginAtZero: true,
                             position: 'left',
-                            title: { display: true, text: unit[index].replace('USD', currency)}
+                            title: { display: true, text: 'Million USD'.replace('USD', currency)}
                         },
                         y2: {
-                            beginAtZero: true,
+                            beginAtZero: false,
                             position: 'right',
-                            title: { display: true, text: 'Growth (%)' },
+                            title: { display: true, text: 'Percentage (%)' },
                             grid: {
                                 drawOnChartArea: false // Prevent grid lines for the second Y-axis
                             }
@@ -163,6 +170,27 @@
                     }
                 }
 
+            });
+        }
+
+        function updateSelectedIndices() {
+            console.log(selectedIndices);
+            const selectedIndicesDiv = document.getElementById('selectedIndices');
+            selectedIndicesDiv.innerHTML = '';
+            selectedIndices.forEach(index => {
+                const div = document.createElement('div');
+                div.className = 'selected-item bg-gray-200 rounded px-2 py-1 m-1 flex items-center';
+                div.textContent = index;
+                const span = document.createElement('span');
+                span.className = 'ml-2 cursor-pointer text-red-500';
+                span.textContent = 'X';
+                span.addEventListener('click', () => {
+                    selectedIndices = selectedIndices.filter(i => i !== index);
+                    updateSelectedIndices();
+                    createChart();
+                });
+                div.appendChild(span);
+                selectedIndicesDiv.appendChild(div);
             });
         }
 
@@ -196,12 +224,6 @@
             createChart();
         });
 
-        
-        // Handle index changes
-        document.getElementById('indexSelect').addEventListener('change', (e) => {
-            index = e.target.value;
-            createChart();
-        });
 
         // Handle period changes
         document.getElementById('periodSelect').addEventListener('change', (e) => {
@@ -212,6 +234,23 @@
         // Handle currency changes
         document.getElementById('currencySelect').addEventListener('change', (e) => {
             currency = e.target.value;
+            createChart();
+        });
+        
+        // Handle index changes
+        document.getElementById('indexSelect').addEventListener('change', (e) => {
+            const value = e.target.value;
+            e.target.value = 'select';
+            if (value === 'all') {
+                selectedIndices = indices;
+            } else if (value === 'none') {
+                selectedIndices = [];
+            } else if (selectedIndices.includes(value)) {
+                return;
+            } else {
+                selectedIndices.push(value);
+            }
+            updateSelectedIndices();
             createChart();
         });
 

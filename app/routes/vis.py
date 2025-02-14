@@ -37,6 +37,9 @@ def get_financial_data():
         company = request.args.get('company')
         index = request.args.get('index')
 
+        if not period or not currency or not company or not index:
+            return jsonify({'error': 'No data found for the selected companies and indices'}), 404
+
         role = current_user.role.upper()
         if role == 'ADMIN':
             role = 'GLOBAL'
@@ -90,7 +93,10 @@ def get_financial_data():
         ]
 
         i = -1
-        for c in company.split(','):
+
+        pairs = [[c, idx] for c in company.split(',') for idx in index.split(',')]
+
+        for c, index in pairs:
             if c not in df_pivot['Company Name'].unique():
                 continue
             i += 1
@@ -140,13 +146,14 @@ def get_financial_data():
                 })
                 i += 1
                 dataset.append({
+                    'type': None if 'Margin' not in index else 'line',
                     'label': f'{c} {index}',
                     'data': df_yearly.groupby(['CALENDAR_YEAR', 'CALENDAR_QTR'])[index].sum().tolist(),
                     'fill': False,
                     'borderColor': colors[i % len(colors)],
                     'backgroundColor': colors[i % len(colors)],
                     'tension': 0.1,
-                    'yAxisID': 'y1',
+                    'yAxisID': 'y1' if 'Margin' not in index else 'y2',
                 })
             else:
                 data = df_yearly.groupby('CALENDAR_YEAR')[index].sum().tolist()
@@ -168,19 +175,20 @@ def get_financial_data():
                 })
                 i += 1
                 dataset.append({
+                    'type': None if 'Margin' not in index else 'line',
                     'label': f'{c} {index}',
                     'data': df_yearly.groupby('CALENDAR_YEAR')[index].sum().tolist(),
                     'fill': False,
                     'borderColor': colors[i % len(colors)],
                     'backgroundColor': colors[i % len(colors)],
                     'tension': 0.1,
-                    'yAxisID': 'y1',
+                    'yAxisID': 'y1' if 'Margin' not in index else 'y2',
                 })
-
-        dataset.sort(key=lambda x: 0 if 'type' in x.keys() else 1)
+        
+        dataset.sort(key=lambda x: 0 if 'type' in x.keys() and x['type'] == 'line' else 1)
 
         if len(dataset) == 0:
-            return jsonify({'error': 'No data found for the selected company'}), 404
+            return jsonify({'error': 'No data found for the selected companies and indices'}), 404
 
         if period == 'quarterly':
             data = {
