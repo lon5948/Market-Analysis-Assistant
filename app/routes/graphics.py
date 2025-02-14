@@ -122,6 +122,8 @@ def get_graphics():
         bars = [bar1, bar2]
         ax1.legend([b.get_label() for b in bars], loc='upper left', fontsize=16)
         # Show the plot
+        if not os.path.exists('app/images'):
+            os.makedirs('app/images')
         plt.savefig('app/images/grouped_bar_chart.png', dpi=300)
 
         formats = [f"{company} {year} Q{quarter}"]
