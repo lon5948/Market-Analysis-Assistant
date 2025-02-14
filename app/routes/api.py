@@ -6,6 +6,7 @@ from google.oauth2 import service_account
 from datetime import datetime, timedelta
 from typing import List
 from vertexai.language_models import TextEmbeddingModel
+from vertexai.generative_models import GenerativeModel
 
 api = Blueprint('api', __name__)
 class TranscriptStorageHandler:
@@ -208,7 +209,7 @@ def vector_search_find_neighbors(
         num_neighbors=num_neighbors,
     )
 
-def perform_vector_search_and_get_content(input_string: str, lookup_file: str, index_endpoint_name: str, deployed_index_id: str) -> List[str]:
+def perform_vector_search_and_get_content(input_string: str, lookup_file: str, index_endpoint_name: str, deployed_index_id: str) -> List[List[str]]:
     """Perform a vector search and return the content of the nearest neighbors.
 
     Args:
@@ -243,10 +244,39 @@ def perform_vector_search_and_get_content(input_string: str, lookup_file: str, i
 
     return content
 
+def generate_response_for_input_text(input_string: str, lookup_file: str, index_endpoint_name: str, deployed_index_id: str, prompt_template: str = None) -> str:
+    """Generate the response for the input text.
+
+    Args:
+        input_string (str): Required. The input string to search for.
+        lookup_file (str): Required. The file to look up the content from.
+        index_endpoint_name (str): Required. Index endpoint to run the query
+        against.
+        deployed_index_id (str): Required. The ID of the DeployedIndex to run
+        the queries against.
+
+    Returns:
+        List[str] - The content of the nearest neighbors.
+    """
+    model = GenerativeModel("gemini-1.5-pro-002")
+    contexts = perform_vector_search_and_get_content(input_string, lookup_file, index_endpoint_name, deployed_index_id)
+
+    if prompt_template is None:
+        prompt_template = "You are a financial analyst. You are being asked for the given input: \n\n{input}\n\n.You are analyzing based on the following financial data:\n\n{content}\n\n"
+
+    prompt = prompt_template.format(input=input_string, content="\n\n".join([context[5] for context in contexts]))
+    response = model.generate_content(prompt)
+
+    return response.text
+
 # Example usage
-input_string = "Baidu 2024 Q1"
+input_string = "Total Revenue of Baidu 2024 Q1"
 lookup_file = "../../combined_embedding_data/china_combined_vector_db_data.csv"
 index_endpoint_name = "3798746703268413440"
 deployed_index_id = "china_deploy_1739541595466"
-neighbors = perform_vector_search_and_get_content(input_string, lookup_file, index_endpoint_name, deployed_index_id)
-print(neighbors)
+# neighbors = perform_vector_search_and_get_content(input_string, lookup_file, index_endpoint_name, deployed_index_id)
+# print(neighbors)
+
+print("query:", input_string)
+response = generate_response_for_input_text(input_string, lookup_file, index_endpoint_name, deployed_index_id)
+print("response:", response)
