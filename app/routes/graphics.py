@@ -5,6 +5,7 @@ import numpy as np
 import os
 from PIL import Image
 from matplotlib import pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
 from playwright.sync_api import sync_playwright
 
@@ -15,8 +16,7 @@ graphics = Blueprint('graphics', __name__)
 def get_graphics():
     try:
         role = current_user.role.upper()
-        role = 'GLOBAL' if role == 'ADMIN' else role
-        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         company = request.args.get('company')
         year = request.args.get('year')
@@ -40,6 +40,8 @@ def get_graphics():
         cur_df = df[(df['Company Name'] == company) & (df['CALENDAR_YEAR'] == int(year)) & (df['CALENDAR_QTR'] == f'Q{quarter}')]
         prev_df = df[(df['Company Name'] == company) & (df['CALENDAR_YEAR'] == int(prev_year)) & (df['CALENDAR_QTR'] == f'Q{prev_quarter}')]
 
+        if cur_df.empty or prev_df.empty:
+            return jsonify({'error': 'No data available for the specified company, year, and quarter.'}), 404
         # print(cur_df.head())
         # print(prev_df.head())
 
@@ -88,8 +90,8 @@ def get_graphics():
         }
 
         categories = values.keys()
-        values1 = list(values.values())
-        values2 = list(prev_values.values())
+        values1 = [value if value > 0 else 0 for value in values.values()]
+        values2 = [value if value > 0 else 0 for value in prev_values.values()]
         units = ['$'] * 7 + ['%'] * 2
 
         x = np.arange(len(categories)) * 1
@@ -118,6 +120,11 @@ def get_graphics():
         # Set font size for y-axis tick labels
         ax1.tick_params(axis='y', labelsize=16)
         ax2.tick_params(axis='y', labelsize=16)
+
+        def thousands_formatter(x, pos):
+            return f'{int(x):,}'
+        ax1.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
+        ax2.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
 
         bars = [bar1, bar2]
         ax1.legend([b.get_label() for b in bars], loc='upper left', fontsize=16)
@@ -223,8 +230,8 @@ def get_graphics():
                     </tbody>
                 </table>
                 </img>
-                <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-                <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+                <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+                <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
             </div>
         </body>
         </html>
