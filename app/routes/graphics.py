@@ -4,6 +4,10 @@ import pandas as pd
 import numpy as np
 import os
 from PIL import Image
+
+import matplotlib
+matplotlib.use('Agg')
+
 from matplotlib import pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
@@ -16,11 +20,12 @@ graphics = Blueprint('graphics', __name__)
 def get_graphics():
     try:
         role = current_user.role.upper()
+        role = 'GLOBAL' if role == 'ADMIN' else role
         data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         company = request.args.get('company')
         year = request.args.get('year')
-        quarter = request.args.get('quarter')
+        quarter = request.args.get('quarter').replace('Q', '')
 
         if year == '2020' and quarter == '1':
             prev_year = '2020'
@@ -31,9 +36,9 @@ def get_graphics():
         else:
             prev_year = year
             prev_quarter = str(int(quarter) - 1)
-    
 
-        print(company, year, quarter, prev_year, prev_quarter)
+
+        # print(company, year, quarter, prev_year, prev_quarter)
 
         df = pd.read_csv(data_path)
 
@@ -97,6 +102,8 @@ def get_graphics():
         x = np.arange(len(categories)) * 1
         width = 0.35
 
+        plt.close('all')
+
         fig, ax1 = plt.subplots(figsize=(20, 10))
         ax2 = ax1.twinx()
 
@@ -133,7 +140,7 @@ def get_graphics():
             os.makedirs('app/images')
         plt.savefig('app/images/grouped_bar_chart.png', dpi=300)
 
-        formats = [f"{company} {year} Q{quarter}"]
+        formats = []
         for key, value in values.items():
             prev_value = prev_values[key]
             change = ((value - prev_value) / prev_value) * 100
@@ -142,7 +149,7 @@ def get_graphics():
             color = 'white' if change == 0 else color
             change = f'+{change}' if change > 0 else str(change)
             formats += [value, prev_value, color , change]
-        
+
         html = '''
         <!DOCTYPE html>
         <html lang="en">
@@ -161,7 +168,6 @@ def get_graphics():
         </head>
         <body>
             <div class="container">
-                <h1>%s Financial Report</h1>
                 <h2>Key Metrics Summary</h2>
                 <table>
                     <thead>
@@ -250,12 +256,12 @@ def get_graphics():
         # Open the background and overlay images
         background = Image.open("app/images/financial_report.png")
         overlay = Image.open("app/images/grouped_bar_chart.png")
-        
+
         scale = 0.2
         overlay = overlay.resize((int(overlay.width * scale), int(overlay.height * scale)))
 
         # Set position (top-left corner)
-        position = ((background.width - overlay.width) // 2, 600)
+        position = ((background.width - overlay.width) // 2, 500)
 
         # Paste overlay on background (with transparency if PNG)
         background.paste(overlay, position, overlay)
