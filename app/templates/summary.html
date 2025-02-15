@@ -304,9 +304,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // PDF generation
             downloadButton.onclick = async () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'pt', 'a4');
                 const content = document.getElementById('reportContent');
+                const canvas = await html2canvas(content, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    letterRendering: true
+                });
+
+                // Calculate scale to fit both width and height
+                const contentWidth = canvas.width;
+                const contentHeight = canvas.height;
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'pt', [contentWidth, contentHeight]);
 
                 // Set PDF margins
                 const margins = {
@@ -316,41 +327,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     right: 40
                 };
 
-                // Calculate usable page width
+                // Calculate usable page dimensions
                 const pageWidth = doc.internal.pageSize.getWidth() - margins.left - margins.right;
-
-                // Generate PDF with proper scaling
-                const canvas = await html2canvas(content, {
-                    scale: 2, // Increase quality
-                    useCORS: true,
-                    logging: false,
-                    letterRendering: true
-                });
-
-                const contentWidth = canvas.width;
-                const contentHeight = canvas.height;
                 const pageHeight = doc.internal.pageSize.getHeight() - margins.top - margins.bottom;
 
-                // Calculate scale to fit width
-                const scale = pageWidth / contentWidth;
-                const scaledHeight = contentHeight * scale;
+                // Calculate scales for width and height
+                const scaleWidth = pageWidth / contentWidth;
+                const scaleHeight = pageHeight / contentHeight;
 
-                // Add pages as needed
-                let heightLeft = scaledHeight;
-                let position = margins.top;
-                let page = 1;
+                // Use the smaller scale to ensure content fits in both dimensions
+                const scale = Math.min(scaleWidth, scaleHeight);
 
-                doc.addImage(canvas, 'PNG', margins.left, position, pageWidth, scaledHeight);
-                heightLeft -= pageHeight;
+                // Calculate final dimensions
+                const finalWidth = contentWidth * scale;
+                const finalHeight = contentHeight * scale;
 
-                while (heightLeft >= 0) {
-                    position = margins.top - pageHeight * page;
-                    doc.addPage();
-                    doc.addImage(canvas, 'PNG', margins.left, position, pageWidth, scaledHeight);
-                    heightLeft -= pageHeight;
-                    page++;
-                }
+                // Calculate position to center content
+                const xOffset = margins.left + (pageWidth - finalWidth) / 2;
+                const yOffset = margins.top + (pageHeight - finalHeight) / 2;
 
+                // Add image to PDF
+                doc.addImage(canvas, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
+                const linkText = "Transcript Link";
+                doc.setTextColor(0, 0, 255);
+                doc.setFontSize(32);
+                doc.text(linkText, xOffset + 48, yOffset + finalHeight + 20);
+                doc.link(xOffset + 48, yOffset + finalHeight - 20, 100, 32, { url: transcriptData.url });
+
+                // Save the PDF
                 doc.save(`${formData.company}_${formData.year}_${formData.quarter}_report.pdf`);
             };
 
