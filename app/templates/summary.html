@@ -254,6 +254,11 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         try {
+            // Get financial metrics image
+            const graphicsResponse = await fetch(`/api/graphics?company=${formData.company}&year=${formData.year}&quarter=${formData.quarter}`);
+            const graphicsBlob = await graphicsResponse.blob();
+            const graphicsUrl = URL.createObjectURL(graphicsBlob);
+
             // Get transcript data and content from your API endpoints
             const transcriptResponse = await fetch('/api/get_transcript_url', {
                 method: 'POST',
@@ -273,55 +278,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const transcriptContent = await transcriptContentResponse.json();
             if (transcriptContent.error) throw new Error(transcriptContent.error);
 
-            // Prepare the Markdown prompt
-            const prompt = `
-                    Generate a professional financial report for ${formData.company} for ${formData.year} ${formData.quarter}.
-
-                    Use the following transcript content for detailed analysis:
-
-                    ${transcriptContent}
-
-                    Please structure the report as follows:
-
-                    1. Executive Summary
-                    - Company performance overview based on the transcript
-                    - Key highlights and challenges mentioned in the call
-                    - Major developments and announcements
-
-                    2. Financial Analysis
-                    - Detailed metrics analysis with QoQ comparisons
-                    - Revenue and profitability trends discussed in the call
-                    - Cost structure and margins insights
-                    - Management's commentary on financial performance
-
-                    3. Market Position
-                    - Competitive landscape insights from the call
-                    - Market share analysis and market conditions
-                    - Strategic initiatives and developments mentioned
-                    - Product/service updates and roadmap
-
-                    4. Future Outlook
-                    - Management guidance and forward-looking statements
-                    - Growth opportunities discussed
-                    - Risk factors and challenges mentioned
-                    - Market trends and industry outlook
-
-                    5. Q&A Highlights
-                    - Key questions from analysts
-                    - Management's responses to critical questions
-                    - Additional context provided during Q&A
-
-                    6. References
-                    Transcript Link: ${transcriptData.url}
-
-                    Format the response in clean, professional HTML with proper heading hierarchy and structure. Remember, just provide a hyperlink to the transcript instead of whole Transcript Link.`;
-
+            const info = `${formData.company} - ${formData.year} ${formData.quarter}`;
+            const graphics = `<img src="${graphicsUrl}" alt="Financial Metrics" style="width: 100%; max-width: 1000px; margin: 2rem auto; display: block;"/>`;
 
             // Get report content
-            const chatResponse = await fetch('/api/chat', {
+            const chatResponse = await fetch('/api/chat/summary', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: prompt })
+                body: JSON.stringify({ message: info, transcript: transcriptContent.content, transcript_link: transcriptData.url, graphics: graphics })
             });
 
             const chatData = await chatResponse.json();

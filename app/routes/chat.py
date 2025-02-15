@@ -22,14 +22,15 @@ class FinancialChatbot:
         aiplatform.init(project=project, location=location)
         self.embedding_model = TextEmbeddingModel.from_pretrained(embedding_model)
         self.generative_model = GenerativeModel(generative_model)
-        self.prompt_tplt = self._read_prompt_template()
+        self.prompt_tplt = self._read_prompt_template('chatbot_prompt_template.txt')
+        self.summary_prompt_tplt = self._read_prompt_template('summary_prompt_template.txt')
 
-    def _read_prompt_template(self):
+    def _read_prompt_template(self, filename):
         """Read the prompt template from file."""
-        template_path = os.path.join('data', 'prompts', 'chatbot_prompt_template.txt')
+        template_path = os.path.join('data', 'prompts', filename)
         with open(template_path, 'r') as file:
             return file.read().strip()
-            
+
 
     def get_datapoint_content_from_csv(self, file_path: str, id: int) -> List[str]:
         """Read content from CSV file for a specific row."""
@@ -101,6 +102,33 @@ class FinancialChatbot:
         response = self.generative_model.generate_content(prompt)
         return response.text
 
+    def generate_summary(
+        self,
+        input_string: str,
+        lookup_file: str,
+        index_endpoint_name: str,
+        deployed_index_id: str,
+        transcript: str,
+        transcript_link: str,
+        graphics: str
+    ) -> str:
+        """Generate response based on user input and context."""
+
+        contexts = self.perform_vector_search_and_get_content(
+            input_string, lookup_file, index_endpoint_name, deployed_index_id
+        )
+
+        prompt = self.summary_prompt_tplt.format(
+            input=input_string,
+            content="\n\n".join([context[5] for context in contexts if context]),
+            transcript=transcript,
+            transcript_link=transcript_link,
+            graphics=graphics
+        )
+
+        response = self.generative_model.generate_content(prompt)
+        return response.text
+
 # Initialize chatbot
 project = os.environ.get("PROJECT")
 location = os.environ.get("VECTOR_SEARCH_LOCATION")
@@ -134,7 +162,44 @@ def chat_endpoint():
                 input_string=user_message,
                 lookup_file=lookup_file,
                 index_endpoint_name=index_endpoint_name,
-                deployed_index_id=deployed_index_id
+                deployed_index_id=deployed_index_id,
+            )
+            return jsonify({'response': response})
+
+        return jsonify({'message': 'User role not set. Please contact your system administrator'})
+
+    except Exception as e:
+        # print("error:", e)
+        return jsonify({'error': str(e)}), 500
+
+@chat.route('/api/chat/summary', methods=['POST'])
+@login_required
+def summary_endpoint():
+    try:
+        data = request.get_json()
+        user_message = data.get('message')
+        transcript = data.get('transcript')
+        transcript_link = data.get('transcript_link')
+        graphics = data.get('graphics')
+
+        # Get appropriate lookup file and endpoints based on user's role
+        cur_role = current_user.role.upper()
+        if cur_role == 'ADMIN':
+            cur_role = 'GLOBAL'
+
+        if cur_role != 'NONE':
+            lookup_file = os.environ.get(f"{cur_role}_LOOKUP_FILES")
+            index_endpoint_name = os.environ.get(f"{cur_role}_ENDPOINT")
+            deployed_index_id = os.environ.get(f"{cur_role}_DEPLOYED_ID")
+
+            response = chatbot.generate_summary(
+                input_string=user_message,
+                lookup_file=lookup_file,
+                index_endpoint_name=index_endpoint_name,
+                deployed_index_id=deployed_index_id,
+                transcript=transcript,
+                transcript_link=transcript_link,
+                graphics=graphics
             )
             return jsonify({'response': response})
 
