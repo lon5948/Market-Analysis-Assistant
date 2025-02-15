@@ -14,6 +14,7 @@ def create_content(row):
     Value (USD): ${row['USD_Value']:,.2f} Million
     Local Currency: {row['Local_Currency']}
     Local Value: {row['Local_Value']:,.2f} Million
+    TWD Value: {row['USD_Value'] * 32.93:,.2f} Million TWD
     """
 
 def get_embedding(text):
