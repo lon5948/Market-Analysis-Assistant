@@ -15,8 +15,7 @@ graphics = Blueprint('graphics', __name__)
 def get_graphics():
     try:
         role = current_user.role.upper()
-        role = 'GLOBAL' if role == 'ADMIN' else role
-        data_path = os.path.join('data', f'{role}_FIN_Data.csv')
+        data_path = os.path.join('FIN_data', f'{role}_FIN_Data.csv')
 
         company = request.args.get('company')
         year = request.args.get('year')
@@ -88,8 +87,8 @@ def get_graphics():
         }
 
         categories = values.keys()
-        values1 = list(values.values())
-        values2 = list(prev_values.values())
+        values1 = [value if value > 0 else 0 for value in values.values()]
+        values2 = [value if value > 0 else 0 for value in prev_values.values()]
         units = ['$'] * 7 + ['%'] * 2
 
         x = np.arange(len(categories)) * 1
