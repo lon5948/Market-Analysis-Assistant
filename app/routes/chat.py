@@ -49,7 +49,7 @@ class FinancialChatbot:
         index_endpoint_name: str,
         deployed_index_id: str,
         queries: List[List[float]],
-        num_neighbors: int = 10
+        num_neighbors: int = 32
     ) -> List[List[aiplatform.matching_engine.matching_engine_index_endpoint.MatchNeighbor]]:
         """Perform vector search to find nearest neighbors."""
         my_index_endpoint = aiplatform.MatchingEngineIndexEndpoint(
