@@ -15,13 +15,12 @@ Please structure the report according to the following format:
 - Notable market conditions or external factors
 - Management's overall sentiment
 
-
 2. Financial Performance Analysis (400-500 words)
 - Detailed revenue analysis with growth drivers
 - Profitability metrics and margin trends
 - Cost structure and efficiency initiatives
 - Balance sheet highlights and cash position
-- Include data visualizations for key metrics where applicable: {graphics}
+- Include this image: {graphics}
 
 3. Business Segment & Market Analysis (300-400 words)
 - Performance by business segment/geography
@@ -47,7 +46,6 @@ Please structure the report according to the following format:
 Formatting Requirements:
 - Use proper HTML semantic structure with appropriate heading tags (h1-h6)
 - Include data tables for financial metrics, if you do not have data, please ignore it.
-- Generate visualization placeholders for key trends
 - Maintain consistent formatting throughout
 - Include citations for all data sources
 - Format numbers consistently with appropriate decimal places
